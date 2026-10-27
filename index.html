@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>指數與對數函數對稱性與交點探索</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- KaTeX CSS & JS for high-quality fast math rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <!-- Google Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 450px;
+        }
+        .katex { font-size: 1.05em; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-slate-900 text-white shadow-md border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-indigo-400">指數與對數函數的對稱與交點</h1>
+                <p class="text-xs sm:text-sm text-slate-400 mt-1">探索 $y = a^x$ 與 $y = \log_a(x)$ 在對稱軸 $y = x$ 下的圖形變化</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col gap-6">
+
+        <!-- 1. Top Section: Large Function Graph Canvas -->
+        <div class="bg-slate-900 p-5 rounded-xl shadow-lg border border-slate-800 flex flex-col">
+            <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+                <h2 class="text-lg font-semibold text-slate-100 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                    函數圖形總覽
+                </h2>
+                <div class="flex items-center gap-4 text-xs font-medium text-slate-300">
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-yellow-400 inline-block"></span> <span>$y = a^x$</span></span>
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-400 inline-block"></span> <span>$y = \log_a(x)$</span></span>
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-slate-500 inline-block"></span> <span>$y = x$</span></span>
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-400 inline-block"></span> <span>截距 $(0,1), (1,0)$</span></span>
+                </div>
+            </div>
+
+            <div class="canvas-container flex-1 min-h-[480px]">
+                <canvas id="functionChart"></canvas>
+            </div>
+            
+            <p class="text-xs text-center text-slate-400 mt-3">💡 提示：指數函數與對數函數互為反函數，兩者圖形必定關於直線 $y = x$ 鏡射對稱。</p>
+        </div>
+
+        <!-- 2. Middle Section: Base Slider & Intersection Count Side-by-Side (3:1 Ratio) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            <!-- Left: Control Parameters (Width ~ 3/4) -->
+            <div class="lg:col-span-8 bg-slate-900 p-5 rounded-xl shadow-lg border border-slate-800 flex flex-col justify-between">
+                <h2 class="text-lg font-semibold text-slate-100 border-b border-slate-800 pb-3 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                    控制參數
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                    <!-- Base Slider Column -->
+                    <div class="md:col-span-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="baseSlider" class="font-medium text-slate-300">底數 $a$：</label>
+                            <span id="baseValue" class="text-lg font-bold text-indigo-400 bg-indigo-950/60 border border-indigo-800 px-2.5 py-0.5 rounded-md">2.000</span>
+                        </div>
+                        <input type="range" id="baseSlider" min="0.01" max="3.5" step="0.005" value="2" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                        <div class="flex justify-between text-xs text-slate-400 mt-1">
+                            <span>$0.01$</span>
+                            <span>$1.0$</span>
+                            <span>$e^{1/e} \approx 1.445$</span>
+                            <span>$3.5$</span>
+                        </div>
+                    </div>
+
+                    <!-- Fast Preset Buttons Column -->
+                    <div class="md:col-span-6 space-y-2">
+                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block">快速切換與自動探索</span>
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                            <button onclick="setBase(2.0)" class="px-2.5 py-2 text-xs font-medium rounded-lg bg-slate-800 hover:bg-indigo-900/50 hover:text-indigo-300 transition text-slate-200 border border-slate-700 text-center">
+                                <span>$a = 2$</span>
+                            </button>
+                            <button onclick="setBase(1.4447)" class="px-2.5 py-2 text-xs font-medium rounded-lg bg-slate-800 hover:bg-indigo-900/50 hover:text-indigo-300 transition text-slate-200 border border-slate-700 text-center">
+                                <span>$e^{1/e}$</span>
+                            </button>
+                            <button onclick="setBase(1.0)" class="px-2.5 py-2 text-xs font-medium rounded-lg bg-slate-800 hover:bg-indigo-900/50 hover:text-indigo-300 transition text-slate-200 border border-slate-700 text-center">
+                                <span>$a = 1$</span>
+                            </button>
+                            <button onclick="setBase(0.5)" class="px-2.5 py-2 text-xs font-medium rounded-lg bg-slate-800 hover:bg-indigo-900/50 hover:text-indigo-300 transition text-slate-200 border border-slate-700 text-center">
+                                <span>$a = 1/2$</span>
+                            </button>
+                            <button id="autoPlayBtn" onclick="toggleAutoPlay()" class="col-span-2 sm:col-span-1 px-2.5 py-2 text-xs font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 transition border border-indigo-500 text-center flex items-center justify-center gap-1 shadow-md">
+                                <svg id="playIcon" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
+                                <span id="playBtnText">自動播放</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Intersection Information (Width ~ 1/4) -->
+            <div class="lg:col-span-4 bg-slate-900 p-5 rounded-xl shadow-lg border border-slate-800 flex flex-col justify-between">
+                <h2 class="text-lg font-semibold text-slate-100 border-b border-slate-800 pb-3 mb-3 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    交點資訊
+                </h2>
+                
+                <div class="flex flex-col gap-3 my-auto py-2">
+                    <div>
+                        <div id="statusBadge" class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-amber-950/80 text-amber-300 border border-amber-800">
+                            計算中...
+                        </div>
+                    </div>
+                    <p id="intersectionCountText" class="font-bold text-slate-100 text-lg">交點個數：-</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer / Mathematical Concept Guide -->
+    <footer class="bg-slate-900 border-t border-slate-800 mt-6 py-6 text-slate-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-xs space-y-3">
+            <h3 class="font-bold text-slate-100 text-sm border-b border-slate-800 pb-2">觀念重點摘要：</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-slate-950/70 p-3 rounded-lg border border-slate-800">
+                    <h4 class="font-semibold text-indigo-400 mb-1.5">當 $a > 1$ 時（遞增函數）：</h4>
+                    <ul class="list-disc pl-5 space-y-1.5 text-slate-300">
+                        <li><b>$a > e^{1/e} \approx 1.445$：</b> 指數成長極快，圖形位於 $y=x$ 上方，<b>沒有交點</b>。</li>
+                        <li><b>$a = e^{1/e} \approx 1.445$：</b> 圖形與 $y=x$ 相切，<b>恰有 $1$ 個交點</b> $(e, e)$，且切線斜率 $y' = 1$。</li>
+                        <li><b>$1 < a < e^{1/e}$：</b> 圖形穿越 $y=x$，<b>恰有 $2$ 個交點</b>（均位於 $y=x$ 上）。</li>
+                    </ul>
+                </div>
+
+                <div class="bg-slate-950/70 p-3 rounded-lg border border-slate-800">
+                    <h4 class="font-semibold text-emerald-400 mb-1.5">當 $0 < a < 1$ 時（遞減函數）：</h4>
+                    <ul class="list-disc pl-5 space-y-1.5 text-slate-300">
+                        <li><b>$e^{-e} \le a < 1$ （約 $0.066 \le a < 1$）：</b> 兩函數皆為遞減，<b>恰有 $1$ 個交點</b>（部位於 $y=x$ 上）。</li>
+                        <li><b>$0 < a < e^{-e} \approx 0.066$：</b> 遞減速度極快，除了 $y=x$ 上有 $1$ 個交點外，還會額外產生 $2$ 個關於 $y=x$ 對稱的交點，<b>合計共 $3$ 個交點</b>！</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Script Section -->
+    <script>
+        let chartInstance = null;
+        let autoPlayInterval = null;
+        let autoPlayDirection = 1; // 1: 增加, -1: 減少
+        const e = Math.E;
+        const critical_high = Math.exp(1 / e); // e^(1/e) ≈ 1.444667826
+        const critical_low = Math.exp(-e);      // e^(-e)   ≈ 0.0659880358
+
+        // Helper to render KaTeX in specific elements
+        function renderMath(element) {
+            if (window.renderMathInElement && element) {
+                renderMathInElement(element, {
+                    delimiters: [
+                        {left: "$$", right: "$$", display: true},
+                        {left: "$", right: "$", display: false},
+                        {left: "\\(", right: "\\)", display: false},
+                        {left: "\\[", right: "\\]", display: true}
+                    ],
+                    throwOnError : false
+                });
+            }
+        }
+
+        // Render all static math on load
+        function renderAllStaticMath() {
+            renderMath(document.body);
+        }
+
+        // Find numerical solutions using bisection/grid search
+        function findIntersections(a) {
+            let points = [];
+
+            // Case 1: Search along y = x -> f(x) = a^x - x = 0
+            let f = (x) => Math.pow(a, x) - x;
+
+            // Helper for bisection method
+            function bisection(fn, min, max, tol = 1e-6) {
+                let fMin = fn(min);
+                let fMax = fn(max);
+                if (fMin * fMax > 0) return null;
+                let mid = (min + max) / 2;
+                while ((max - min) / 2 > tol) {
+                    mid = (min + max) / 2;
+                    let fMid = fn(mid);
+                    if (Math.abs(fMid) < tol) break;
+                    if (fMin * fMid < 0) {
+                        max = mid;
+                        fMax = fMid;
+                    } else {
+                        min = mid;
+                        fMin = fMid;
+                    }
+                }
+                return mid;
+            }
+
+            // 1. Search intersections on y = x line
+            if (a > 1) {
+                if (Math.abs(a - critical_high) < 0.005) {
+                    points.push({x: e, y: e});
+                } else if (a < critical_high) {
+                    // Two roots on y = x
+                    let r1 = bisection(f, 0.1, e - 0.01);
+                    let r2 = bisection(f, e + 0.01, 15);
+                    if (r1 !== null) points.push({x: r1, y: r1});
+                    if (r2 !== null) points.push({x: r2, y: r2});
+                }
+            } else if (a < 1) {
+                // There is always 1 root on y = x for 0 < a < 1
+                let rMain = bisection(f, 0.001, 5);
+                if (rMain !== null) points.push({x: rMain, y: rMain});
+
+                // Check for 3 intersections case (when a < e^(-e))
+                if (a < critical_low + 0.002) {
+                    // g(x) = a^(a^x) - x = 0
+                    let g = (x) => Math.pow(a, Math.pow(a, x)) - x;
+                    
+                    // Search left of main root
+                    let rLeft = bisection(g, 0.001, rMain - 0.01);
+                    if (rLeft !== null && Math.abs(rLeft - rMain) > 0.02) {
+                        let yLeft = Math.pow(a, rLeft);
+                        points.push({x: rLeft, y: yLeft});
+                        points.push({x: yLeft, y: rLeft}); // Symmetric counterpart
+                    }
+                }
+            }
+
+            // Sort points by x coordinate
+            return points.sort((p1, p2) => p1.x - p2.x);
+        }
+
+        function generateData(a) {
+            const expPoints = [];
+            const logPoints = [];
+            const linePoints = [];
+
+            // Range definition for data calculation: x from -10 to 20
+            const xMin = -10.0;
+            const xMax = 20.0;
+            const step = 0.05;
+
+            for (let x = xMin; x <= xMax; x += step) {
+                // Line y = x
+                linePoints.push({x: x, y: x});
+
+                // Exponential y = a^x
+                let yExp = Math.pow(a, x);
+                if (yExp <= 25 && yExp >= -15) {
+                    expPoints.push({x: x, y: yExp});
+                } else {
+                    expPoints.push({x: x, y: null});
+                }
+
+                // Logarithmic y = log_a(x)
+                if (x > 0) {
+                    let yLog = Math.log(x) / Math.log(a);
+                    if (yLog <= 25 && yLog >= -15) {
+                        logPoints.push({x: x, y: yLog});
+                    } else {
+                        logPoints.push({x: x, y: null});
+                    }
+                } else {
+                    logPoints.push({x: x, y: null});
+                }
+            }
+
+            return { expPoints, logPoints, linePoints };
+        }
+
+        function updateUI(a) {
+            document.getElementById('baseValue').innerText = parseFloat(a).toFixed(3);
+
+            const intersections = findIntersections(a);
+            const countText = document.getElementById('intersectionCountText');
+            const badge = document.getElementById('statusBadge');
+
+            if (Math.abs(a - 1.0) < 0.01) {
+                badge.className = "inline-block px-3 py-1 rounded-full text-xs font-semibold bg-red-950/80 text-red-300 border border-red-800";
+                badge.innerHTML = "無意義 ($a = 1$)";
+                countText.innerHTML = "交點個數：未定義";
+            } else if (a > 1) {
+                if (a > critical_high + 0.001) {
+                    badge.className = "inline-block px-3 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700";
+                    badge.innerHTML = "無交點 ($a > e^{1/e}$)";
+                    countText.innerHTML = "交點個數：$0$ 個";
+                } else if (Math.abs(a - critical_high) <= 0.001) {
+                    badge.className = "inline-block px-3 py-1 rounded-full text-xs font-semibold bg-indigo-950/80 text-indigo-300 border border-indigo-800";
+                    badge.innerHTML = "相切 ($a \\approx 1.445$)";
+                    countText.innerHTML = "交點個數：$1$ 個 (切點)";
+                } else {
+                    badge.className = "inline-block px-3 py-1 rounded-full text-xs font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-800";
+                    badge.innerHTML = "相交於兩點 ($1 < a < 1.445$)";
+                    countText.innerHTML = `交點個數：$${intersections.length}$ 個`;
+                }
+            } else { // a < 1
+                if (a < critical_low - 0.001) {
+                    badge.className = "inline-block px-3 py-1 rounded-full text-xs font-semibold bg-purple-950/80 text-purple-300 border border-purple-800";
+                    badge.innerHTML = "特殊情況 ($a < e^{-e}$)";
+                    countText.innerHTML = `交點個數：$${intersections.length}$ 個`;
+                } else {
+                    badge.className = "inline-block px-3 py-1 rounded-full text-xs font-semibold bg-blue-950/80 text-blue-300 border border-blue-800";
+                    badge.innerHTML = "單一交點 ($0.066 \\le a < 1$)";
+                    countText.innerHTML = `交點個數：$${intersections.length}$ 個`;
+                }
+            }
+
+            // Re-render KaTeX on dynamic status update
+            renderMath(badge);
+            renderMath(countText);
+        }
+
+        function toggleAutoPlay() {
+            if (autoPlayInterval) {
+                stopAutoPlay();
+            } else {
+                startAutoPlay();
+            }
+        }
+
+        function startAutoPlay() {
+            const slider = document.getElementById('baseSlider');
+            const btnText = document.getElementById('playBtnText');
+            const playIcon = document.getElementById('playIcon');
+            
+            btnText.innerText = "暫停播放";
+            playIcon.innerHTML = `<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>`;
+
+            // Range between 0.6 and 1.5
+            const minA = 0.6;
+            const maxA = 1.5;
+            const step = 0.01;
+
+            autoPlayInterval = setInterval(() => {
+                let currentA = parseFloat(slider.value);
+                currentA += step * autoPlayDirection;
+
+                if (currentA >= maxA) {
+                    currentA = maxA;
+                    autoPlayDirection = -1;
+                } else if (currentA <= minA) {
+                    currentA = minA;
+                    autoPlayDirection = 1;
+                }
+
+                slider.value = currentA;
+                onSliderChange(currentA);
+            }, 20); // 20ms per frame (1.5x faster than 30ms)
+        }
+
+        function stopAutoPlay() {
+            if (autoPlayInterval) {
+                clearInterval(autoPlayInterval);
+                autoPlayInterval = null;
+            }
+            const btnText = document.getElementById('playBtnText');
+            const playIcon = document.getElementById('playIcon');
+            btnText.innerText = "自動播放";
+            playIcon.innerHTML = `<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>`;
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('functionChart').getContext('2d');
+
+            // Custom plugin to draw static coordinate text labels directly on canvas
+            const pointLabelPlugin = {
+                id: 'pointLabelPlugin',
+                afterDatasetsDraw(chart) {
+                    const { ctx } = chart;
+                    const datasetIndex = 3; // Intercepts dataset
+                    const meta = chart.getDatasetMeta(datasetIndex);
+
+                    if (!meta || !meta.data) return;
+
+                    ctx.save();
+                    ctx.font = '600 13px Inter, sans-serif';
+                    ctx.fillStyle = '#ffffff'; // White color for labels on canvas
+
+                    // Label (0, 1) - Index 0
+                    if (meta.data[0]) {
+                        const pt0 = meta.data[0];
+                        ctx.textAlign = 'right';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('(0, 1)', pt0.x - 10, pt0.y);
+                    }
+
+                    // Label (1, 0) - Index 1
+                    if (meta.data[1]) {
+                        const pt1 = meta.data[1];
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'top';
+                        ctx.fillText('(1, 0)', pt1.x, pt1.y + 10);
+                    }
+
+                    ctx.restore();
+                }
+            };
+
+            chartInstance = new Chart(ctx, {
+                type: 'scatter',
+                plugins: [pointLabelPlugin],
+                data: {
+                    datasets: [
+                        {
+                            label: 'y = a^x',
+                            data: [],
+                            showLine: true,
+                            borderColor: '#facc15', // neon yellow (yellow-400)
+                            borderWidth: 2.5,
+                            pointRadius: 0,
+                            tension: 0.2
+                        },
+                        {
+                            label: 'y = log_a(x)',
+                            data: [],
+                            showLine: true,
+                            borderColor: '#10b981', // emerald green (emerald-500)
+                            borderWidth: 2.5,
+                            pointRadius: 0,
+                            tension: 0.2
+                        },
+                        {
+                            label: 'y = x',
+                            data: [],
+                            showLine: true,
+                            borderColor: '#64748b', // slate-500
+                            borderWidth: 1.5,
+                            borderDash: [5, 5],
+                            pointRadius: 0
+                        },
+                        {
+                            label: '截距點',
+                            data: [
+                                {x: 0, y: 1},
+                                {x: 1, y: 0}
+                            ],
+                            backgroundColor: '#f59e0b', // amber-500
+                            borderColor: '#0f172a',
+                            borderWidth: 2,
+                            pointRadius: 6,
+                            pointHoverRadius: 8
+                        },
+                        {
+                            label: '交點',
+                            data: [],
+                            backgroundColor: '#f43f5e', // rose-500
+                            borderColor: '#0f172a',
+                            borderWidth: 2,
+                            pointRadius: 6,
+                            pointHoverRadius: 8
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 0 // Smooth performance during slider drag
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            min: -10,
+                            max: 20,
+                            ticks: {
+                                color: '#94a3b8' // slate-400
+                            },
+                            title: {
+                                display: true,
+                                text: 'x 軸',
+                                color: '#cbd5e1', // slate-300
+                                font: { weight: 'bold' }
+                            },
+                            grid: {
+                                color: (context) => context.tick.value === 0 ? '#e2e8f0' : '#334155',
+                                lineWidth: (context) => context.tick.value === 0 ? 2 : 1
+                            }
+                        },
+                        y: {
+                            min: -10,
+                            max: 10,
+                            ticks: {
+                                color: '#94a3b8' // slate-400
+                            },
+                            title: {
+                                display: true,
+                                text: 'y 軸',
+                                color: '#cbd5e1', // slate-300
+                                font: { weight: 'bold' }
+                            },
+                            grid: {
+                                color: (context) => context.tick.value === 0 ? '#e2e8f0' : '#334155',
+                                lineWidth: (context) => context.tick.value === 0 ? 2 : 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.datasetIndex === 3) {
+                                        return context.parsed.x === 0 ? '截距 (0, 1)' : '截距 (1, 0)';
+                                    }
+                                    return `${context.dataset.label}: (${context.parsed.x.toFixed(3)}, ${context.parsed.y.toFixed(3)})`;
+                                }
+                            }
+                        },
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChart(a) {
+            if (!chartInstance) return;
+
+            const { expPoints, logPoints, linePoints } = generateData(a);
+            const intersections = findIntersections(a);
+
+            chartInstance.data.datasets[0].data = expPoints;
+            chartInstance.data.datasets[1].data = logPoints;
+            chartInstance.data.datasets[2].data = linePoints;
+            chartInstance.data.datasets[4].data = intersections;
+
+            chartInstance.update();
+        }
+
+        function setBase(val) {
+            stopAutoPlay();
+            const slider = document.getElementById('baseSlider');
+            slider.value = val;
+            onSliderChange(val);
+        }
+
+        function onSliderChange(val) {
+            const a = parseFloat(val);
+            updateUI(a);
+            updateChart(a);
+        }
+
+        window.onload = function() {
+            initChart();
+            renderAllStaticMath();
+
+            const slider = document.getElementById('baseSlider');
+            
+            slider.addEventListener('input', (e) => {
+                stopAutoPlay();
+                onSliderChange(e.target.value);
+            });
+
+            // Initial render
+            onSliderChange(slider.value);
+        };
+    </script>
+</body>
+</html>
